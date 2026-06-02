@@ -7,6 +7,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { EntitlementsModule } from './entitlements/entitlements.module';
 import { CarrierModule } from './carrier/carrier.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AuditModule } from './audit/audit.module';
 
 
 @Module({
@@ -17,7 +18,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     WebhooksModule,
     EntitlementsModule,
     CarrierModule,
-    NotificationsModule
+    NotificationsModule,
+    AuditModule
   ],
   controllers: [HealthController],
 })

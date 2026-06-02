@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { DatabaseService } from '../database/database.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class MockCarrierService {
@@ -8,7 +9,11 @@ export class MockCarrierService {
   private readonly carrierBaseUrl =
     process.env.CARRIER_API_URL || 'http://localhost:3000';
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly auditService: AuditService,
+
+  ) { }
 
   @Cron('*/5 * * * *')
   async pollCarrier() {
@@ -47,6 +52,21 @@ export class MockCarrierService {
              WHERE user_id = $1`,
             [row.user_id],
           );
+
+          await this.auditService.record(client, {
+            userId: row.user_id,
+            prev: {
+              active: true,
+              source: 'CARRIER',
+              expiresAt: row.expires_at,
+            },
+            next: {
+              active: false,
+              source: 'NONE',
+              expiresAt: row.expires_at,
+            },
+            reason: 'CARRIER_INACTIVE',
+          });
         }
         // api_error → no-op (fail safe)
       }

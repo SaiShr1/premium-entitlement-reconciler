@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { NotificationScheduler } from '../notifications/notification-scheduler.service';
 import { StoreWebhookDto } from './dto/store-webhook.dto';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class StoreWebhookService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly notificationScheduler: NotificationScheduler
+    private readonly notificationScheduler: NotificationScheduler,
+    private readonly auditService: AuditService,
   ) { }
 
   async process(dto: StoreWebhookDto) {
@@ -78,6 +80,23 @@ export class StoreWebhookService {
           dto.userId,
         ],
       );
+
+      // 7. Audit log (inside transaction, before COMMIT)
+      await this.auditService.record(client, {
+        userId: dto.userId,
+        triggeringEventId: dto.eventId,
+        prev: {
+          active: row.active,
+          source: row.source,
+          expiresAt: row.expires_at,
+        },
+        next: {
+          active: update.active,
+          source: update.source,
+          expiresAt: update.expiresAt,
+        },
+        reason: update.reason,
+      });
 
       await client.query('COMMIT');
 

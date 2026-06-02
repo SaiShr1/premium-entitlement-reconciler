@@ -4,9 +4,10 @@ import { StoreWebhookService } from './store-webhook.service';
 import { MarketplaceController } from './marketplace.controller';
 import { MarketplaceService } from './marketplace.service';
 import { NotificationsModule } from '../notifications/notifications.module'
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, AuditModule],
   controllers: [StoreWebhookController, MarketplaceController],
   providers: [StoreWebhookService, MarketplaceService],
 })
