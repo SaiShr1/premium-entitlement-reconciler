@@ -12,6 +12,8 @@ A backend service that ingests premium subscription signals from three sales cha
 
 ## How to Run
 
+Before running make sure you have node version >24
+
 ```bash
 cp .env.example .env
 # Optionally set DD_API_KEY for Datadog
@@ -76,7 +78,7 @@ curl 'http://localhost:3000/mock/carrier/plan?userId=u_carrier_1'
 | Choice | Alternative | Why |
 | --- | --- | --- |
 | **PostgreSQL** | SQLite | Need `SELECT FOR UPDATE SKIP LOCKED` for concurrent workers |
-| **NestJS** | Fastify / Express | DI, modules, decorators, `@nestjs/schedule` — all interview-explainable |
+| **NestJS** | Fastify / Express | DI, modules, decorators, `@nestjs/schedule`, a complete package |
 | **First-write-wins** | Last-write-wins | Prevents channel-hopping; simpler conflict model |
 | **Raw SQL** | TypeORM / Prisma | Full control over transactions and locking behaviour |
 
@@ -96,3 +98,7 @@ curl 'http://localhost:3000/mock/carrier/plan?userId=u_carrier_1'
 DB_HOST=localhost npm run test:e2e -- --verbose
 
 ```
+
+## Docs
+
+Please visit docs folder for all the local testing/running guide, plan documments and full disclosure.
