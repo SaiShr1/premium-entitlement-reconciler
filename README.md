@@ -1,98 +1,98 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Premium Entitlement Reconciler
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A backend service that ingests premium subscription signals from three sales channels and maintains canonical entitlement state per user.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Channels
 
-## Description
+| Channel | Mechanism | Behaviour |
+| --- | --- | --- |
+| In-app Store | Webhooks pushed to us | At-least-once, no ordering guarantee, may arrive days late |
+| Mobile Carrier | We poll their API every 5 min | Statuses: `active` / `inactive` / `api_error` |
+| Third-party Marketplace | Monthly bulk revoke request | Only revokes, never grants |
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## How to Run
 
 ```bash
-$ npm install
+cp .env.example .env
+# Optionally set DD_API_KEY for Datadog
+docker compose up --build
+
 ```
 
-## Compile and run the project
+The app starts on `http://localhost:3000`. Migrations and seed data run automatically on startup.
+
+## API Reference
+
+**Health check:**
 
 ```bash
-# development
-$ npm run start
+curl http://localhost:3000/health
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
 ```
 
-## Run tests
+**Store webhook (create/renew/cancel subscription):**
 
 ```bash
-# unit tests
-$ npm run test
+curl -X POST http://localhost:3000/webhooks/store \
+  -H 'Content-Type: application/json' \
+  -d '{"eventId":"evt_001","userId":"u_new","type":"INITIAL_PURCHASE","eventTimeMs":1000,"productId":"premium_monthly"}'
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+**Marketplace bulk revoke:**
 
 ```bash
-$ npm install -g mau
-$ mau deploy
+curl -X POST http://localhost:3000/webhooks/marketplace/revoke \
+  -H 'Content-Type: application/json' \
+  -d '{"userIds":["u_market_1"]}'
+
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+**Read entitlement:**
 
-## Resources
+```bash
+curl http://localhost:3000/users/u_store_1/entitlement
 
-Check out a few resources that may come in handy when working with NestJS:
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+**Mock carrier (used internally by poller):**
 
-## Support
+```bash
+curl 'http://localhost:3000/mock/carrier/plan?userId=u_carrier_1'
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```
 
-## Stay in touch
+## Design Decisions
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+* **First-write-wins ownership.** The first channel to grant a user premium owns the entitlement. Subsequent channels are rejected until the owner revokes. Enforced via `SELECT FOR UPDATE` inside a transaction.
+* **`SKIP LOCKED` for worker safety.** Both the carrier poller and notification worker use `FOR UPDATE SKIP LOCKED` so multiple instances can run concurrently without double-processing.
+* **No ORM — raw SQL via `pg`.** Easier to reason about transactions, locking, and the exact queries under review pressure. No hidden N+1s or magic.
+* **Idempotent webhooks.** Store events are deduplicated via `processed_events` table. Duplicate `eventId` returns `201` with no state change.
+* **Out-of-order guard.** Store events carry `eventTimeMs`. Stale events (lower timestamp than last processed) are silently dropped.
+* **Fail-safe carrier polling.** `api_error` from the carrier triggers no state change — we never revoke on uncertainty.
 
-## License
+## Tradeoffs Considered
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+| Choice | Alternative | Why |
+| --- | --- | --- |
+| **PostgreSQL** | SQLite | Need `SELECT FOR UPDATE SKIP LOCKED` for concurrent workers |
+| **NestJS** | Fastify / Express | DI, modules, decorators, `@nestjs/schedule` — all interview-explainable |
+| **First-write-wins** | Last-write-wins | Prevents channel-hopping; simpler conflict model |
+| **Raw SQL** | TypeORM / Prisma | Full control over transactions and locking behaviour |
+
+## What I'd Change With Another Week
+
+* Connection pooling tuning (min/max pool size, idle timeout)
+* Outbox pattern for notifications instead of direct DB insert
+* Retry with exponential backoff on carrier API errors
+* Multi-region Datadog configuration
+* Rate limiting on webhook endpoints
+* Proper secrets management (Vault / AWS SSM)
+
+## Running Tests
+
+```bash
+# Start Postgres (keep docker compose up in another terminal)
+DB_HOST=localhost npm run test:e2e -- --verbose
+
+```
