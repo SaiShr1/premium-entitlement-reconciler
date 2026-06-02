@@ -5,6 +5,11 @@ import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
 import { DatabaseService } from './database/database.service';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { EntitlementsService } from './entitlements/entitlements.service';
+import { EntitlementsController } from './entitlements/entitlements.controller';
+import { EntitlementsModule } from './entitlements/entitlements.module';
+import { CarrierModule } from './carrier/carrier.module';
+import { MockCarrierService } from './carrier/mock-carrier.service';
 
 
 @Module({
@@ -12,9 +17,11 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     DatabaseModule,
-    WebhooksModule
+    WebhooksModule,
+    EntitlementsModule,
+    CarrierModule
   ],
-  controllers: [HealthController],
-  providers: [DatabaseService],
+  controllers: [HealthController, EntitlementsController],
+  providers: [DatabaseService, EntitlementsService, MockCarrierService],
 })
 export class AppModule {}
