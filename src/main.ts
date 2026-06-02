@@ -1,4 +1,4 @@
-// import './observability/tracer'; // Uncomment in Phase 6.5
+import './observability/tracer';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';

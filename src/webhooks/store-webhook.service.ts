@@ -3,6 +3,7 @@ import { DatabaseService } from '../database/database.service';
 import { NotificationScheduler } from '../notifications/notification-scheduler.service';
 import { StoreWebhookDto } from './dto/store-webhook.dto';
 import { AuditService } from '../audit/audit.service';
+import { MetricsService } from '../observability/metrics.service';
 
 @Injectable()
 export class StoreWebhookService {
@@ -10,6 +11,7 @@ export class StoreWebhookService {
     private readonly db: DatabaseService,
     private readonly notificationScheduler: NotificationScheduler,
     private readonly auditService: AuditService,
+    private readonly metrics: MetricsService,
   ) { }
 
   async process(dto: StoreWebhookDto) {
@@ -19,6 +21,7 @@ export class StoreWebhookService {
       [dto.eventId],
     );
     if (rowCount === 0) {
+      this.metrics.increment('webhook.duplicate', { source: 'store' });
       return { status: 'duplicate', eventId: dto.eventId };
     }
 
@@ -49,12 +52,14 @@ export class StoreWebhookService {
       // 3. Source conflict — first-write-wins
       if (row.active && row.source !== 'STORE' && row.source !== 'NONE') {
         await client.query('COMMIT');
+        this.metrics.increment('webhook.source_conflict', { source: 'store' });
         return { status: 'source_conflict', current: this.mapRow(row) };
       }
 
       // 4. Out-of-order guard
       if (row.last_event_time_ms && dto.eventTimeMs <= Number(row.last_event_time_ms)) {
         await client.query('COMMIT');
+        this.metrics.increment('webhook.out_of_order', { source: 'store' });
         return { status: 'out_of_order', current: this.mapRow(row) };
       }
 
@@ -97,6 +102,10 @@ export class StoreWebhookService {
         },
         reason: update.reason,
       });
+
+        // 8. Metrics
+        this.metrics.increment('webhook.processed', { event_type: dto.type });
+        this.metrics.increment('state_change', { source: 'STORE', reason: update?.reason });
 
       await client.query('COMMIT');
 

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { DatabaseService } from '../database/database.service';
 import { AuditService } from '../audit/audit.service';
+import { MetricsService } from '../observability/metrics.service';
 
 @Injectable()
 export class MockCarrierService {
@@ -12,7 +13,7 @@ export class MockCarrierService {
   constructor(
     private readonly db: DatabaseService,
     private readonly auditService: AuditService,
-
+    private readonly metrics: MetricsService,
   ) { }
 
   @Cron('*/5 * * * *')
@@ -39,7 +40,8 @@ export class MockCarrierService {
       for (const row of rows) {
         const status = await this.fetchCarrierStatus(row.user_id);
         this.logger.log(`User ${row.user_id}: carrier status=${status}`);
-
+        this.metrics.increment('carrier.poll_result', { status });
+        
         if (status === 'active') {
           await client.query(
             `UPDATE entitlements SET last_changed_at = NOW() WHERE user_id = $1`,

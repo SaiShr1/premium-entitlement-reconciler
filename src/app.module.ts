@@ -8,6 +8,7 @@ import { EntitlementsModule } from './entitlements/entitlements.module';
 import { CarrierModule } from './carrier/carrier.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuditModule } from './audit/audit.module';
+import { ObservabilityModule } from './observability/observability.module';
 
 
 @Module({
@@ -19,7 +20,8 @@ import { AuditModule } from './audit/audit.module';
     EntitlementsModule,
     CarrierModule,
     NotificationsModule,
-    AuditModule
+    AuditModule,
+    ObservabilityModule
   ],
   controllers: [HealthController],
 })
