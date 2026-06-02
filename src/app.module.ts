@@ -3,13 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
-import { DatabaseService } from './database/database.service';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { EntitlementsService } from './entitlements/entitlements.service';
-import { EntitlementsController } from './entitlements/entitlements.controller';
 import { EntitlementsModule } from './entitlements/entitlements.module';
 import { CarrierModule } from './carrier/carrier.module';
-import { MockCarrierService } from './carrier/mock-carrier.service';
+import { NotificationsModule } from './notifications/notifications.module';
 
 
 @Module({
@@ -19,9 +16,9 @@ import { MockCarrierService } from './carrier/mock-carrier.service';
     DatabaseModule,
     WebhooksModule,
     EntitlementsModule,
-    CarrierModule
+    CarrierModule,
+    NotificationsModule
   ],
-  controllers: [HealthController, EntitlementsController],
-  providers: [DatabaseService, EntitlementsService, MockCarrierService],
+  controllers: [HealthController],
 })
 export class AppModule {}

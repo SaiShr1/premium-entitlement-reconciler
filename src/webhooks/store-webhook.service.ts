@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { NotificationScheduler } from '../notifications/notification-scheduler.service';
 import { StoreWebhookDto } from './dto/store-webhook.dto';
 
 @Injectable()
 export class StoreWebhookService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notificationScheduler: NotificationScheduler
+  ) { }
 
   async process(dto: StoreWebhookDto) {
     // 1. Idempotency check
@@ -76,6 +80,16 @@ export class StoreWebhookService {
       );
 
       await client.query('COMMIT');
+
+      // Schedule notification if expiring within 24h
+      if (update.expiresAt) {
+        const hoursUntilExpiry =
+          (new Date(update.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
+        if (hoursUntilExpiry <= 24 && hoursUntilExpiry > 0) {
+          await this.notificationScheduler.schedule(dto.userId, new Date(update.expiresAt));
+        }
+      }
+
       return { status: 'applied', update };
     } catch (err) {
       await client.query('ROLLBACK');
